@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Search, Download, Calendar, DollarSign, Eye, EyeOff, Trash2, Filter, RefreshCw, FileText, TrendingUp, ShoppingBag } from 'lucide-react';
-import axios from 'axios';
+import { useAuth } from '../contexts/AuthContext';
 
 interface ReceiptItem {
   name: string;
@@ -29,6 +29,7 @@ interface Filter {
 }
 
 export default function History() {
+  const { token } = useAuth();
   const [receipts, setReceipts] = useState<Receipt[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [summary, setSummary] = useState<Summary>({ total: 0, count: 0 });
@@ -47,8 +48,23 @@ export default function History() {
     try {
       setLoading(true);
       setError("");
-      const response = await axios.get("http://127.0.0.1:8000/receipts");
-      const data = response.data;
+      
+      if (!token) {
+        setError("Authentication required. Please log in.");
+        return;
+      }
+
+      const response = await fetch("http://127.0.0.1:8000/receipts", {
+        headers: {
+          "Authorization": `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch receipts');
+      }
+
+      const data = await response.json();
       setReceipts(data);
       setSummary({
         total: data.reduce((acc: number, r: Receipt) => acc + r.total, 0),
@@ -70,8 +86,23 @@ export default function History() {
     const confirmDelete = window.confirm("Are you sure you want to delete this receipt?");
     if (!confirmDelete) return;
 
+    if (!token) {
+      alert("Authentication required. Please log in.");
+      return;
+    }
+
     try {
-      await axios.delete(`http://127.0.0.1:8000/receipts/${id}`);
+      const response = await fetch(`http://127.0.0.1:8000/receipts/${id}`, {
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete receipt');
+      }
+
       const deletedReceipt = receipts.find((r) => r.id === id);
       setReceipts((prev) => prev.filter((r) => r.id !== id));
       setSummary((prev) => ({

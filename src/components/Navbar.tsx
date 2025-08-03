@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Receipt, Home, History, Menu, X } from 'lucide-react';
+import { Receipt, Home, History, Menu, X, User, LogOut } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const { user, logout } = useAuth();
 
   const navigation = [
     { name: 'Home', href: '/', icon: Home },
@@ -61,6 +63,21 @@ export default function Navbar() {
                 </Link>
               );
             })}
+            
+            {/* User Menu */}
+            <div className="flex items-center space-x-3 ml-4 pl-4 border-l border-white/20">
+              <div className="flex items-center space-x-2 text-blue-100">
+                <User className="h-4 w-4" />
+                <span className="text-sm">{user?.email}</span>
+              </div>
+              <button
+                onClick={logout}
+                className="flex items-center space-x-1 px-3 py-2 rounded-lg text-blue-100 hover:text-white hover:bg-white/10 transition-all duration-300"
+              >
+                <LogOut className="h-4 w-4" />
+                <span className="text-sm">Logout</span>
+              </button>
+            </div>
           </div>
 
           {/* Mobile menu button */}
@@ -105,6 +122,24 @@ export default function Navbar() {
                   </Link>
                 );
               })}
+              
+              {/* Mobile User Menu */}
+              <div className="border-t border-white/20 pt-3 mt-3">
+                <div className="flex items-center space-x-2 px-3 py-2 text-blue-100">
+                  <User className="h-4 w-4" />
+                  <span className="text-sm">{user?.email}</span>
+                </div>
+                <button
+                  onClick={() => {
+                    logout();
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="flex items-center space-x-2 px-3 py-2 rounded-lg text-blue-100 hover:text-white hover:bg-white/10 transition-all duration-300 w-full"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span>Logout</span>
+                </button>
+              </div>
             </div>
           </div>
         )}

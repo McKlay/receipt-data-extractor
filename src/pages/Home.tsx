@@ -1,9 +1,10 @@
 import React from 'react';
 import { useState } from 'react';
 import { Upload, FileText, BarChart3, Clock } from 'lucide-react';
-import axios from 'axios';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function Home() {
+  const { token } = useAuth();
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -22,19 +23,31 @@ export default function Home() {
       return;
     }
 
+    if (!token) {
+      setError("Authentication required. Please log in.");
+      return;
+    }
+
     const formData = new FormData();
     formData.append("file", file);
 
     try {
       setLoading(true);
       setError("");
-      const response = await axios.post("http://127.0.0.1:8000/extract", formData, {
+      const response = await fetch("http://127.0.0.1:8000/extract", {
+        method: "POST",
+        body: formData,
         headers: {
-          "Content-Type": "multipart/form-data",
+          "Authorization": `Bearer ${token}`,
         },
       });
 
-      setExtractedData(response.data);
+      if (!response.ok) {
+        throw new Error('Failed to extract data');
+      }
+
+      const data = await response.json();
+      setExtractedData(data);
     } catch (err) {
       console.error(err);
       setError("Failed to extract data. Please try again.");
